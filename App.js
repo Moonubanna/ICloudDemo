@@ -33,6 +33,7 @@ export default class App extends React.Component {
       scope: 'visible',
       uploadingDownloading: false,
       videoURL: undefined,
+      uploadingVideoURL: undefined
     }
   }
 
@@ -61,7 +62,11 @@ export default class App extends React.Component {
       }
       const options = {
         title: "Choose Video",
-        mediaType: "video"
+        mediaType: "video",
+        storageOptions: {
+          skipBackup: true,
+          path: 'images',
+        },
       };
 
       ImagePicker.launchImageLibrary(options, response => {
@@ -77,7 +82,7 @@ export default class App extends React.Component {
           } else {
             url = response.uri;
           }
-          console.warn('video_select_path'+JSON.stringify(response))
+          console.warn('video_select_path' + JSON.stringify(response))
           this.setState({ videoURL: url });
           this._uploadVideo(url);
         }
@@ -88,20 +93,20 @@ export default class App extends React.Component {
   }
 
   _uploadVideo = (url) => {
-     //const sourceUri = { uri: 'https://www.radiantmediaplayer.com/media/bbb-360p.mp4' };
+    //const sourceUri = { uri: 'https://www.radiantmediaplayer.com/media/bbb-360p.mp4' };
     // const destinationPath = "/docs/my_video_"+random+".mp4";
 
     const min = 1;
     const max = 1000;
     const random = min + (Math.random() * (max - min));
     const sourceUri = { uri: url };
-    const destinationPath = "/docs/my_video_"+random+".mp4";
+    const destinationPath = "/docs/my_video_" + random + ".MOV";
     const mimeType = null;
     const scope = 'visible';
-    console.log('uploading_video_path'+destinationPath);
+    console.log('uploading_video_path' + destinationPath);
     this.setState({
-      uploadingVideoURL:destinationPath,
-      uploadingDownloading:true
+      uploadingVideoURL: destinationPath,
+      uploadingDownloading: true
     })
 
     NativeModules.RNCloudFs.copyToCloud({
@@ -113,26 +118,26 @@ export default class App extends React.Component {
       .then((path) => {
         console.log("it worked video uploading", path);
         this.setState({
-          uploadingDownloading:false
+          uploadingDownloading: false
         })
       })
       .catch((err) => {
         console.warn("it failed video uploading", err);
         this.setState({
-          uploadingDownloading:false
+          uploadingDownloading: false
         })
       })
   }
 
   //Check video file exist or not
-  _fileExist = () => {
+  _fileExist = (destinationPath) => {
     NativeModules.RNCloudFs.fileExists({
-      targetPath: '/docs/my_video_.mp4',
+      targetPath: destinationPath,
       scope: this.state.scope
     })
       .then((exists) => {
         console.log(exists ? "this file exists" : "this file does not exist");
-        this._listTheFile(this.state.uploadingVideoURL)
+        this._listTheFile(destinationPath)
       })
       .catch((err) => {
         console.warn("it failed", err);
@@ -143,23 +148,23 @@ export default class App extends React.Component {
   //For download video
   async _listTheFile(uploadingVideoURL) {
 
-    const path = 'uploadingVideoURL';
+    const path = uploadingVideoURL;
     const scope = this.state.scope;
     this.setState({
-      uploadingDownloading:true
+      uploadingDownloading: true
     })
 
     NativeModules.RNCloudFs.listFiles({ targetPath: path, scope: scope })
       .then((res) => {
         console.log("it worked get video", res);
         this.setState({
-          uploadingDownloading:false
+          uploadingDownloading: false
         })
       })
       .catch((err) => {
         console.warn("it failed get video", err);
         this.setState({
-          uploadingDownloading:false
+          uploadingDownloading: false
         })
       })
   }
@@ -189,35 +194,35 @@ export default class App extends React.Component {
           justifyContent: 'center'
         }}>
         <TouchableOpacity
-        activeOpacity={.8}
-        onPress={()=>{
-          this.videoPicker()
-        }}
+          activeOpacity={.9}
+          onPress={() => {
+            this.videoPicker()
+          }}
           style={{
             width: '100%',
             height: 50,
             justifyContent: 'center',
             alignItems: 'center',
-            backgroundColor:'red'
+            backgroundColor: 'red'
           }}>
-          <Text style={{color:'white'}}>Pick Video For Uploading</Text>
+          <Text style={{ color: 'white' }}>Pick Video For Uploading</Text>
         </TouchableOpacity>
         {this.state.uploadingVideoURL &&
-        <TouchableOpacity
-        activeOpacity={.8}
-        onPress={()=>{
-          this._fileExist(this.state.uploadingVideoURL)
-        }}
-          style={{
-            width: '100%',
-            height: 50,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor:'orange'
-          }}>
-          <Text style={{color:'white'}}>Get Video URL For Downloading</Text>
-        </TouchableOpacity>
-  }
+          <TouchableOpacity
+            activeOpacity={.8}
+            onPress={() => {
+              this._fileExist(this.state.uploadingVideoURL)
+            }}
+            style={{
+              width: '100%',
+              height: 50,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'orange'
+            }}>
+            <Text style={{ color: 'white' }}>Get Video URL For Downloading</Text>
+          </TouchableOpacity>
+        }
 
         {this.state.uploadingDownloading &&
           <ActivityIndicator size="large" color="#0000ff" />
